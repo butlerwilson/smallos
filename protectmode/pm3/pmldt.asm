@@ -26,6 +26,7 @@ SelectorStack	equ	LABEL_DESC_STACK - GDT_LABEL
 SelectorLDT	equ	LABEL_DESC_LDT - GDT_LABEL
 SelectorVidoe	equ	LABEL_DESC_VIDOE - GDT_LABEL
 
+;GDT DATA
 [SECTION .data]
 ALIGN 32
 [BITS 32]
@@ -34,23 +35,13 @@ LABEL_DATA:
 	message db "The LOAD program will Loading system...", 0
 	OffsetMessage equ message - LABEL_DATA
 	SegDataLen equ $ - LABEL_DATA
-	
-LABEL_LDT_DATA:
-	ldtmessage db "---Here we in LDT environment---", 0
-	OffsetLdtMessage equ ldtmessage - LABEL_LDT_DATA
-	SegLdtDataLen equ $ - LABEL_LDT_DATA
-;end label data
 
-[SECTION .gs]
+[SECTION .ss]
 ALIGN 32
 [BITS 32]
 LABEL_STACK:
 	times 512 db 0
 	TopOfStack equ $ - LABEL_STACK - 1
-
-LABEL_LDT_STACK:
-	times 512 db 0
-	LdtTopOfStack equ $ - LABEL_LDT_STACK - 1
 
 [SECTION .s16]
 [BITS 16]
@@ -278,6 +269,25 @@ SelectorLDTCodeA equ LABEL_LDT_DESC_CODE - LABEL_LDT + SA_TIL
 SelectorLDTStack equ LABEL_LDT_DESC_STACK - LABEL_LDT + SA_TIL
 SelectorLDTData  equ LABEL_LDT_DESC_DATA - LABEL_LDT + SA_TIL
 
+;LDT DATA
+[SECTION .DATA]
+ALIGN 32
+[BITS 32]
+LABEL_LDT_DATA:
+	ldtmessage db "---Here we in LDT environment---", 0
+	OffsetLdtMessage equ ldtmessage - LABEL_LDT_DATA
+	SegLdtDataLen equ $ - LABEL_LDT_DATA
+
+[SECTION .ss]
+ALIGN 32
+[BITS 32]
+LABEL_LDT_STACK:
+	times 512 db 0
+	LdtTopOfStack equ $ - LABEL_LDT_STACK - 1
+
+
+
+
 [SECTION .la]
 ALIGN 32
 [BITS 32]
@@ -293,17 +303,23 @@ LABEL_CODE_A:
 
 	mov ah, 0ch
 	
-;	mov al, 'O'			;I test the stack can use
-;	mov bx, ax
-;	push bx
 	xor esi, esi
 	xor edi, edi
 	mov esi, OffsetLdtMessage
 	mov edi, (80 * 12 + 0) * 2
-	;call ShowString
-;	pop bx
-;	mov ax, bx	
+;here I want to use ShowString function, but it can't work forever.
+	cld
+.1:
+	lodsb
+	test al, al
+	je .2
 	mov [gs:edi], ax
+	add edi, 2
+	jmp .1
+.2:
+	call DispReturn
+
+	;call ShowString
 
 	jmp SelectorCode16:0
 LDTCodeLen equ $ - LABEL_CODE_A
