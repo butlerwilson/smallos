@@ -307,7 +307,9 @@ LABEL_CODE_A:
 	xor edi, edi
 	mov esi, OffsetLdtMessage
 	mov edi, (80 * 12 + 0) * 2
-;here I want to use ShowString function, but it can't work forever.
+	;here I want to use ShowString function, but it can't
+	;work forever. I don't know why. So use instructions instead of
+	;function.
 	cld
 .1:
 	lodsb
@@ -317,9 +319,8 @@ LABEL_CODE_A:
 	add edi, 2
 	jmp .1
 .2:
+	;call ShowString	;function to show string
 	call DispReturn
-
-	;call ShowString
 
 	jmp SelectorCode16:0
 LDTCodeLen equ $ - LABEL_CODE_A
