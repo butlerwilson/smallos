@@ -1,0 +1,19 @@
+# This is a configure file for bochs.
+
+# filename of ROM image
+romimage: file=$BXSHARE/BIOS-bochs-latest 
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+
+# what disk image will be used
+floppya: 1_44=freedos.img, status=inserted
+floppyb: 1_44=pm.img, status=inserted
+
+# chode the boot disk
+#boot: floppy
+boot: a
+#boot: disk
+
+# ths other information
+log: bochsout.txt
+mouse: enabled=0
+megs: 32
