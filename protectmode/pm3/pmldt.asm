@@ -32,10 +32,13 @@ ALIGN 32
 LABEL_DATA:
 	SPValueInRealMode dw 0
 	message db "The LOAD program will Loading system...", 0
-	OffsetMessage equ message - $$
-	ldtmessage db "---Here we in LDT environment---", 0
-	OffsetLdtMessage equ ldtmessage - $$
+	OffsetMessage equ message - LABEL_DATA
 	SegDataLen equ $ - LABEL_DATA
+	
+LABEL_LDT_DATA:
+	ldtmessage db "---Here we in LDT environment---", 0
+	OffsetLdtMessage equ ldtmessage - LABEL_LDT_DATA
+	SegLdtDataLen equ $ - LABEL_LDT_DATA
 ;end label data
 
 [SECTION .gs]
@@ -125,6 +128,15 @@ LABEL_START:
 	shr eax, 16
 	mov byte [LABEL_LDT_DESC_STACK + 4], al
 	mov byte [LABEL_LDT_DESC_STACK + 7], ah
+
+	xor eax, eax
+	mov ax, ds
+	shl eax, 4
+	add eax, LABEL_LDT_DATA
+	mov word [LABEL_LDT_DESC_DATA + 2], ax
+	shr eax, 16
+	mov byte [LABEL_LDT_DESC_DATA + 4], al
+	mov byte [LABEL_LDT_DESC_DATA + 7], ah
 
 	;ready for load gdt
 	xor eax, eax
@@ -258,16 +270,20 @@ Code16Len equ $ - LABEL_SEG_CODE16
 ALIGN 32
 LABEL_LDT:
 LABEL_LDT_DESC_CODE:	Descriptor 0, LDTCodeLen - 1, DA_C + DA_32
-LABEL_LDT_DESC_STACK:   Descriptor 0, LdtTopOfStack, DA_DRWA + DA_32
-LDTLen	equ	$ - LABEL_LDT
+LABEL_LDT_DESC_STACK:   Descriptor 0,  LdtTopOfStack, DA_DRWA + DA_32
+LABEL_LDT_DESC_DATA:	Descriptor 0,  SegLdtDataLen, DA_DPL1 + DA_DRW
+LDTLen equ $ - LABEL_LDT
 
-SelectorLDTCodeA equ LABEL_LDT_DESC_CODE - LABEL_LDT + 4
-SelectorLDTStack equ LABEL_LDT_DESC_STACK - LABEL_LDT + 4
+SelectorLDTCodeA equ LABEL_LDT_DESC_CODE - LABEL_LDT + SA_TIL
+SelectorLDTStack equ LABEL_LDT_DESC_STACK - LABEL_LDT + SA_TIL
+SelectorLDTData  equ LABEL_LDT_DESC_DATA - LABEL_LDT + SA_TIL
 
 [SECTION .la]
 ALIGN 32
 [BITS 32]
 LABEL_CODE_A:
+	mov ax, SelectorLDTData
+	mov ds, ax
 	mov ax, SelectorVidoe
 	mov gs, ax
 
@@ -276,11 +292,18 @@ LABEL_CODE_A:
 	mov esp, LdtTopOfStack
 
 	mov ah, 0ch
+	
+;	mov al, 'O'			;I test the stack can use
+;	mov bx, ax
+;	push bx
 	xor esi, esi
 	xor edi, edi
 	mov esi, OffsetLdtMessage
 	mov edi, (80 * 12 + 0) * 2
-	call ShowString
+	;call ShowString
+;	pop bx
+;	mov ax, bx	
+	mov [gs:edi], ax
 
 	jmp SelectorCode16:0
 LDTCodeLen equ $ - LABEL_CODE_A
