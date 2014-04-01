@@ -8,8 +8,8 @@ START_LABEL:
 
 RESET:
 	mov ax, 0
-	mov dl, 0
-	int 0x13
+	mov dl, 0	;reset drive=0(A)
+	int 0x13	;disk operate interrupt
 	jc RESET
 
 READ:
